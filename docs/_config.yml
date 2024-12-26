@@ -2,13 +2,11 @@ remote_theme: just-the-docs/just-the-docs
 
 title: Gmail CLI
 description: A command line interface for Gmail
-baseurl: ""
-url: "https://ryanparsa.github.io/gmail/"
 repository: "ryanparsa/gmail"
 
 permalink: pretty
 
-ga_tracking: UA-2709176-10
+#ga_tracking: UA-2709176-10
 
 search_enabled: true
 nav_enabled: true
