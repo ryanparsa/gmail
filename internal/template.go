@@ -8,9 +8,9 @@ import (
 
 // Templates defines a map of template names to their file paths.
 var Templates = map[string]string{
-	"config":      "internal/templates/config.yaml",
-	"credentials": "internal/templates/credentials.json",
-	"token":       "internal/templates/token.json",
+	"config.yaml":      "internal/templates/config.yaml",
+	"credentials.json": "internal/templates/credentials.json",
+	"token.json":       "internal/templates/token.json",
 }
 
 // LoadTemplate reads the content of a template file at the given path and returns it as a string.
@@ -40,29 +40,29 @@ func LoadTemplate(path string) string {
 //
 // Returns:
 // - An error if the file cannot be created or written to.
-func SaveTemplate(path string) error {
-	logrus.Infof("Saving template to path: %s", path)
+func SaveTemplate(fileName, templateFilePath string) error {
+	logrus.Infof("Saving template to path: %s", fileName)
 
 	// Create or overwrite the file
-	file, err := os.Create(path)
+	file, err := os.Create(fileName)
 	if err != nil {
-		logrus.Errorf("Failed to create file at path: %s, error: %v", path, err)
+		logrus.Errorf("Failed to create file at path: %s, error: %v", fileName, err)
 		return err
 	}
 	defer func() {
 		if cerr := file.Close(); cerr != nil {
-			logrus.Errorf("Failed to close file at path: %s, error: %v", path, cerr)
+			logrus.Errorf("Failed to close file at path: %s, error: %v", fileName, cerr)
 		}
 	}()
 
 	// Write the template content to the file
 
-	_, err = file.WriteString(LoadTemplate(path))
+	_, err = file.WriteString(LoadTemplate(templateFilePath))
 	if err != nil {
-		logrus.Errorf("Failed to write to file at path: %s, error: %v", path, err)
+		logrus.Errorf("Failed to write to file at path: %s, error: %v", fileName, err)
 		return err
 	}
 
-	logrus.Infof("Successfully saved template to path: %s", path)
+	logrus.Infof("Successfully saved template to path: %s", fileName)
 	return nil
 }

@@ -20,23 +20,23 @@ and creates them using predefined templates if they do not exist.`,
 		logrus.Info("Initializing configuration files...")
 
 		// Loop through all templates
-		for file, template := range internal.Templates {
-			logrus.Infof("Checking file: %s", file)
+		for fileName, templateFilePath := range internal.Templates {
+			logrus.Infof("Checking file: %s", fileName)
 
 			// Check if the file exists
-			if _, err := os.Stat(file); os.IsNotExist(err) {
-				logrus.Infof("File %s does not exist. Creating it...", file)
+			if _, err := os.Stat(fileName); os.IsNotExist(err) {
+				logrus.Infof("File %s does not exist. Creating it...", fileName)
 
 				// Save the template file
-				err = internal.SaveTemplate(file, template)
+				err = internal.SaveTemplate(fileName, templateFilePath)
 				if err != nil {
-					logrus.Fatalf("Failed to create file %s: %v", file, err)
+					logrus.Fatalf("Failed to create file %s: %v", fileName, err)
 				}
-				logrus.Infof("File %s created successfully.", file)
+				logrus.Infof("File %s created successfully.", fileName)
 			} else if err != nil {
-				logrus.Fatalf("Failed to check file %s: %v", file, err)
+				logrus.Fatalf("Failed to check file %s: %v", fileName, err)
 			} else {
-				logrus.Warnf("File %s already exists. Skipping...", file)
+				logrus.Warnf("File %s already exists. Skipping...", fileName)
 			}
 		}
 
