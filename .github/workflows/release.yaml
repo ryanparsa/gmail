@@ -1,0 +1,77 @@
+name: Build and Release
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  discussions: write
+
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types:
+      - created
+      - published
+      - edited
+
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        os: [ linux, windows, darwin ]
+        arch: [ amd64, arm64 ]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+
+      - name: Build
+        run: go build -o build/app-${{ matrix.os }}-${{ matrix.arch }}
+        env:
+          CGO_ENABLED: 0
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ matrix.os }}-${{ matrix.arch }}
+          path: build/app-${{ matrix.os }}-${{ matrix.arch }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: build/
+
+      - name: Create Release Assets
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: |
+            build/app-linux-amd64
+            build/app-linux-arm64
+            build/app-windows-amd64
+            build/app-windows-arm64
+            build/app-darwin-amd64
+            build/app-darwin-arm64
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          draft: true
+          generateReleaseNotes: true
+          makeLatest: true
+          omitBody: true

@@ -1,0 +1,28 @@
+labels:
+  - name: work
+  - name: work/proj1
+  - name: work/proj2
+  - name: notification
+  - name: notification/uber
+  - name: notification/amazon
+  - name: notification/linkedin
+  - name: events
+  - name: events/meetup
+  - name: events/conference
+
+filters:
+  - criteria:
+      from: uber.com
+    action:
+      addlabelids:
+        - notification/uber
+      removeLabelIds:
+        - INBOX
+
+  - criteria:
+      from: linkedin.com
+    action:
+      addlabelids:
+        - notification/linkedin
+      removeLabelIds:
+        - INBOX
