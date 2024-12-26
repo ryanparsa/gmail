@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -94,7 +93,7 @@ func GetToken(authConfig *oauth2.Config) *oauth2.Token {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		code := r.URL.Query().Get("code")
-		fmt.Fprintln(w, "Authentication successful. You may close this browser tab.")
+		logrus.Infof("Authentication successful. You may close this browser tab.")
 		codeChan <- code
 	})
 

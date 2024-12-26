@@ -37,11 +37,10 @@ func LoadTemplate(path string) string {
 //
 // Parameters:
 // - path: The file path where the template content should be saved.
-// - template: The template content to save.
 //
 // Returns:
 // - An error if the file cannot be created or written to.
-func SaveTemplate(path string, template string) error {
+func SaveTemplate(path string) error {
 	logrus.Infof("Saving template to path: %s", path)
 
 	// Create or overwrite the file
