@@ -2,6 +2,20 @@ package internal
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/sirupsen/logrus"
+	"golang.org/x/oauth2"
+)
+
+import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -88,7 +102,8 @@ func GetToken(authConfig *oauth2.Config) *oauth2.Token {
 	server := &http.Server{Addr: strings.TrimPrefix(authConfig.RedirectURL, "http://")}
 	codeChan := make(chan string)
 
-	authURL := authConfig.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+	state := generateState()
+	authURL := authConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	logrus.Infof("Visit the following URL for authentication: %s", authURL)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -123,3 +138,4 @@ func GetToken(authConfig *oauth2.Config) *oauth2.Token {
 	logrus.Info("Successfully obtained OAuth2 token")
 	return token
 }
+
