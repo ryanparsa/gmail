@@ -33,7 +33,7 @@ It does not remove system labels such as "INBOX" or "SPAM".`,
 		logrus.Infof("Fetched %d labels.", len(labelsResp))
 
 		logrus.Info("Deleting user-created labels...")
-		err = srv.DeleteLabels(labelsResp)
+		err = srv.DeleteLabel(labelsResp...)
 		if err != nil {
 			logrus.Fatalf("Failed to delete labels: %v", err)
 		}
@@ -48,7 +48,7 @@ It does not remove system labels such as "INBOX" or "SPAM".`,
 		logrus.Infof("Fetched %d filters.", len(filtersResp))
 
 		logrus.Info("Deleting Gmail filters...")
-		err = srv.DeleteFilters(filtersResp)
+		err = srv.DeleteFilter(filtersResp...)
 		if err != nil {
 			logrus.Fatalf("Failed to delete filters: %v", err)
 		}

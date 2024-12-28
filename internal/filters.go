@@ -7,16 +7,18 @@ import (
 )
 
 // DeleteFilter deletes a specific Gmail filter by its ID.
-func (s *Service) DeleteFilter(filter *gmail.Filter) error {
-	logrus.Infof("Deleting filter with ID: %s", filter.Id)
+func (s *Service) DeleteFilter(filters ...*gmail.Filter) error {
+	for _, filter := range filters {
+		logrus.Infof("Deleting filter with ID: %s", filter.Id)
 
-	err := s.Users.Settings.Filters.Delete("me", filter.Id).Do()
-	if err != nil {
-		logrus.Errorf("Failed to delete filter with ID %s: %v", filter.Id, err)
-		return err
+		err := s.Users.Settings.Filters.Delete("me", filter.Id).Do()
+		if err != nil {
+			logrus.Errorf("Failed to delete filter with ID %s: %v", filter.Id, err)
+			return err
+		}
+
+		logrus.Infof("Successfully deleted filter with ID: %s", filter.Id)
 	}
-
-	logrus.Infof("Successfully deleted filter with ID: %s", filter.Id)
 	return nil
 }
 
@@ -43,22 +45,6 @@ func (s *Service) ApplyFilterActions(action *gmail.FilterAction, messages []*gma
 	return nil
 }
 
-// DeleteFilters deletes a list of Gmail filters.
-func (s *Service) DeleteFilters(filters []*gmail.Filter) error {
-	logrus.Infof("Deleting %d filters", len(filters))
-
-	for _, filter := range filters {
-		err := s.DeleteFilter(filter)
-		if err != nil {
-			logrus.Errorf("Failed to delete filter with ID %s: %v", filter.Id, err)
-			return err
-		}
-	}
-
-	logrus.Info("Successfully deleted all filters")
-	return nil
-}
-
 // Filters retrieves the list of Gmail filters for the current user.
 func (s *Service) Filters() ([]*gmail.Filter, error) {
 	logrus.Info("Fetching all Gmail filters")
@@ -74,16 +60,18 @@ func (s *Service) Filters() ([]*gmail.Filter, error) {
 }
 
 // CreateFilter creates a new Gmail filter.
-func (s *Service) CreateFilter(filter *gmail.Filter) error {
-	logrus.Infof("Creating new filter with ID: %s", filter.Id)
+func (s *Service) CreateFilter(filters ...*gmail.Filter) error {
+	for _, filter := range filters {
+		logrus.Infof("Creating new filter with ID: %s", filter.Id)
 
-	f, err := s.Users.Settings.Filters.Create("me", filter).Do()
-	if err != nil {
-		logrus.Errorf("Failed to create filter with ID %s: %v", filter.Id, err)
-		return err
+		f, err := s.Users.Settings.Filters.Create("me", filter).Do()
+		if err != nil {
+			logrus.Errorf("Failed to create filter with ID %s: %v", filter.Id, err)
+			return err
+		}
+
+		logrus.Infof("Successfully created filter with ID: %s", f.Id)
 	}
-
-	logrus.Infof("Successfully created filter with ID: %s", f.Id)
 	return nil
 
 }

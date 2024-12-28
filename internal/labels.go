@@ -5,29 +5,6 @@ import (
 	"google.golang.org/api/gmail/v1"
 )
 
-// DeleteLabels deletes a list of Gmail labels.
-//
-// Parameters:
-// - labels: A slice of Gmail labels to be deleted.
-//
-// Returns:
-// - An error if any of the label deletions fail.
-func (s *Service) DeleteLabels(labels []*gmail.Label) error {
-	logrus.Infof("Deleting %d labels", len(labels))
-
-	for _, label := range labels {
-		logrus.Infof("Deleting label: %s (ID: %s)", label.Name, label.Id)
-		err := s.DeleteLabel(label)
-		if err != nil {
-			logrus.Errorf("Failed to delete label: %s (ID: %s), error: %v", label.Name, label.Id, err)
-			return err
-		}
-	}
-
-	logrus.Info("Successfully deleted all labels")
-	return nil
-}
-
 // Labels retrieves all Gmail labels for the authenticated user.
 //
 // Returns:
@@ -53,20 +30,22 @@ func (s *Service) Labels() ([]*gmail.Label, error) {
 //
 // Returns:
 // - An error if the label deletion fails or if the label is a system label (which cannot be deleted).
-func (s *Service) DeleteLabel(label *gmail.Label) error {
-	if label.Type == "system" {
-		logrus.Warnf("Skipping deletion of system label: %s (ID: %s)", label.Name, label.Id)
-		return nil
-	}
+func (s *Service) DeleteLabel(labels ...*gmail.Label) error {
+	for _, label := range labels {
+		if label.Type == "system" {
+			logrus.Warnf("Skipping deletion of system label: %s (ID: %s)", label.Name, label.Id)
+			return nil
+		}
 
-	logrus.Infof("Deleting label: %s (ID: %s)", label.Name, label.Id)
-	err := s.Users.Labels.Delete("me", label.Id).Do()
-	if err != nil {
-		logrus.Errorf("Failed to delete label: %s (ID: %s), error: %v", label.Name, label.Id, err)
-		return err
-	}
+		logrus.Infof("Deleting label: %s (ID: %s)", label.Name, label.Id)
+		err := s.Users.Labels.Delete("me", label.Id).Do()
+		if err != nil {
+			logrus.Errorf("Failed to delete label: %s (ID: %s), error: %v", label.Name, label.Id, err)
+			return err
+		}
 
-	logrus.Infof("Successfully deleted label: %s (ID: %s)", label.Name, label.Id)
+		logrus.Infof("Successfully deleted label: %s (ID: %s)", label.Name, label.Id)
+	}
 	return nil
 }
 
@@ -101,15 +80,18 @@ func (s *Service) LabelsMap() (map[string]*gmail.Label, error) {
 //
 // Returns:
 // - An error if the label creation fails.
-func (s *Service) CreateLabel(label *gmail.Label) error {
-	logrus.Infof("Creating label: %s", label.Name)
+func (s *Service) CreateLabel(labels ...*gmail.Label) error {
+	for _, label := range labels {
 
-	_, err := s.Users.Labels.Create("me", label).Do()
-	if err != nil {
-		logrus.Errorf("Failed to create label: %s, error: %v", label.Name, err)
-		return err
+		logrus.Infof("Creating label: %s", label.Name)
+
+		_, err := s.Users.Labels.Create("me", label).Do()
+		if err != nil {
+			logrus.Errorf("Failed to create label: %s, error: %v", label.Name, err)
+			return err
+		}
+
+		logrus.Infof("Successfully created label: %s", label.Name)
 	}
-
-	logrus.Infof("Successfully created label: %s", label.Name)
 	return nil
 }
