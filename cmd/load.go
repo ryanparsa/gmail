@@ -45,7 +45,7 @@ and syncs them with the user's Gmail account.`,
 			logrus.Fatalf("Failed to read configuration file: %v", err)
 		}
 
-		if err := dataConfig.Unmarshal(&config); err != nil {
+		if err := dataConfig.Unmarshal(&data); err != nil {
 			logrus.Fatalf("Failed to parse configuration file: %v", err)
 		}
 
@@ -53,7 +53,7 @@ and syncs them with the user's Gmail account.`,
 		logrus.Info("Syncing Gmail labels...")
 		for _, label := range data.Labels {
 			logrus.Infof("Creating label: %s", label.Name)
-			_, err := srv.Users.Labels.Create("me", &gmail.Label{Name: label.Name}).Do()
+			err := srv.CreateLabel(&label)
 			if err != nil {
 				logrus.Errorf("Failed to create label %s: %v", label.Name, err)
 			} else {
@@ -93,7 +93,7 @@ and syncs them with the user's Gmail account.`,
 
 			// Create the filter
 			logrus.Infof("Creating filter with criteria: %+v", filter.Criteria)
-			_, err := srv.Users.Settings.Filters.Create("me", &filter).Do()
+			err := srv.CreateFilter(&filter)
 			if err != nil {
 				logrus.Errorf("Failed to create filter: %v", err)
 			} else {
