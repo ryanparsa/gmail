@@ -2,6 +2,8 @@ package internal
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/sirupsen/logrus"
@@ -149,7 +151,7 @@ func getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
 		}
 	}()
 
-	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+	authURL := config.AuthCodeURL(generateState(), oauth2.AccessTypeOffline)
 	logrus.Infof("Open the following URL in your browser to authenticate: %s", authURL)
 
 	authCode := <-authCodeChan
@@ -178,4 +180,20 @@ func ClearToken(tokenPath string) error {
 
 	logrus.Info("Token file deleted successfully.")
 	return nil
+}
+
+// generateState generates a random state string for OAuth2 authentication flow.
+// This helps prevent CSRF attacks by verifying the state parameter in the callback.
+func generateState() string {
+	// Define the length of the random state string (32 bytes in this example).
+	const stateLength = 32
+
+	// Generate a random byte array.
+	stateBytes := make([]byte, stateLength)
+	if _, err := rand.Read(stateBytes); err != nil {
+		logrus.Fatalf("Failed to generate random state: %v", err)
+	}
+
+	// Encode the random bytes to a base64 string for safe usage in URLs.
+	return base64.URLEncoding.EncodeToString(stateBytes)
 }
