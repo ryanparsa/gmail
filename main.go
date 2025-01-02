@@ -1,16 +1,9 @@
+/*
+Copyright © 2025 Ryan Parsa <imryanparsa@gmail.com>
+*/
 package main
 
-import (
-	"github.com/ryanparsa/gmail/cmd"
-	"github.com/sirupsen/logrus"
-)
-
-func init() {
-	logrus.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp: true,
-	})
-	logrus.SetLevel(logrus.InfoLevel)
-}
+import "github.com/ryanparsa/gmail/cmd"
 
 func main() {
 	cmd.Execute()

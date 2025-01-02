@@ -1,36 +1,59 @@
 package internal
 
 import (
-	"github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
+	"fmt"
+	"google.golang.org/api/gmail/v1"
+	"gopkg.in/yaml.v3"
 	"os"
 )
 
-// GetConfig loads the OAuth2 configuration from a credentials file and requested scopes.
-//
-// Parameters:
-// - credentials: The file path to the JSON credentials file.
-// - scopes: A list of OAuth2 scopes required for the application.
-//
-// Returns:
-// - A pointer to an oauth2.Config object for authenticating requests.
-// - If any error occurs (e.g., reading the credentials file or parsing JSON), the function logs the error and exits the application.
-func GetConfig(credentials string, scopes ...string) *oauth2.Config {
-	logrus.Infof("Reading OAuth2 credentials from file: %s", credentials)
+type Filters []*gmail.Filter
+type Labels []*gmail.Label
 
-	// Read the credentials file
-	credentialsFile, err := os.ReadFile(credentials)
-	if err != nil {
-		logrus.Fatalf("Failed to read credentials file: %s, error: %v", credentials, err)
+type Messages []*gmail.Message
+
+type Config struct {
+	Labels  Labels  `yaml:"labels" json:"filters" jsonschema_description:"Filters to be applied to emails"`
+	Filters Filters `yaml:"filters" json:"labels" jsonschema_description:"Labels to be created"`
+}
+
+func NewConfig(f Filters, l Labels) *Config {
+	return &Config{
+		Labels:  l,
+		Filters: f,
 	}
 
-	// Parse the credentials into an OAuth2 config
-	authConfig, err := google.ConfigFromJSON(credentialsFile, scopes...)
+}
+
+func NewConfigFromYAML(configFile string) (*Config, error) {
+	fileExists(configFile)
+
+	// Read the contents of the file
+	cf, err := os.ReadFile(configFile)
 	if err != nil {
-		logrus.Fatalf("Failed to parse credentials JSON file: %s, error: %v", credentials, err)
+		return nil, err
+	}
+	var c Config
+	if err := yaml.Unmarshal(cf, &c); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal data: %v", err)
+	}
+	return &c, nil
+}
+
+func (c *Config) SaveToFile(outputPath string) error {
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %v", err)
+	}
+	defer file.Close()
+
+	// Marshal the data to YAML and write it to the file
+	encoder := yaml.NewEncoder(file)
+	defer encoder.Close()
+
+	if err := encoder.Encode(c); err != nil {
+		return fmt.Errorf("failed to encode data to YAML: %v", err)
 	}
 
-	logrus.Info("OAuth2 configuration successfully loaded")
-	return authConfig
+	return nil
 }

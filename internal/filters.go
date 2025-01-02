@@ -1,79 +1,101 @@
 package internal
 
 import (
-	"github.com/sirupsen/logrus"
+	"context"
 	"google.golang.org/api/gmail/v1"
+	"log"
 	"strings"
+	"time"
 )
 
-// DeleteFilter deletes a specific Gmail filter by its ID.
-func (s *Service) DeleteFilter(filters ...*gmail.Filter) error {
-	for _, filter := range filters {
-		logrus.Infof("Deleting filter with ID: %s", filter.Id)
-
-		err := s.Users.Settings.Filters.Delete("me", filter.Id).Do()
-		if err != nil {
-			logrus.Errorf("Failed to delete filter with ID %s: %v", filter.Id, err)
-			return err
-		}
-
-		logrus.Infof("Successfully deleted filter with ID: %s", filter.Id)
-	}
-	return nil
-}
-
-// ApplyFilterActions applies the actions defined in a Gmail filter to a set of messages.
-func (s *Service) ApplyFilterActions(action *gmail.FilterAction, messages []*gmail.Message) error {
-	logrus.Infof("Applying filter actions: AddLabelIds=%v, RemoveLabelIds=%v", action.AddLabelIds, action.RemoveLabelIds)
-
-	for _, msg := range messages {
-		logrus.Infof("Applying actions to message ID: %s", msg.Id)
-
-		modifyReq := &gmail.ModifyMessageRequest{
-			AddLabelIds:    action.AddLabelIds,
-			RemoveLabelIds: action.RemoveLabelIds,
-		}
-
-		_, err := s.Users.Messages.Modify("me", msg.Id, modifyReq).Do()
-		if err != nil {
-			logrus.Errorf("Failed to apply actions to message ID %s: %v", msg.Id, err)
-			return err
-		}
-	}
-
-	logrus.Info("Successfully applied filter actions to all messages")
-	return nil
-}
-
-// Filters retrieves the list of Gmail filters for the current user.
-func (s *Service) Filters() ([]*gmail.Filter, error) {
-	logrus.Info("Fetching all Gmail filters")
-
-	filters, err := s.Users.Settings.Filters.List("me").Do()
+func (s *Service) Filters() (Filters, error) {
+	res, err := s.Service.Users.Settings.Filters.List("me").Do()
 	if err != nil {
-		logrus.Errorf("Failed to fetch Gmail filters: %v", err)
 		return nil, err
 	}
 
-	logrus.Infof("Successfully fetched %d filters", len(filters.Filter))
-	return filters.Filter, nil
+	return res.Filter, nil
 }
 
-// CreateFilter creates a new Gmail filter.
-func (s *Service) CreateFilter(filters ...*gmail.Filter) error {
-	for _, filter := range filters {
-		logrus.Infof("Creating new filter with ID: %s", filter.Id)
+func (s *Service) LabelsMap() (map[string]*gmail.Label, error) {
 
-		f, err := s.Users.Settings.Filters.Create("me", filter).Do()
+	labels, err := s.Labels()
+	if err != nil {
+		return nil, err
+	}
+
+	labelMap := make(map[string]*gmail.Label)
+	for _, label := range labels {
+		labelMap[label.Name] = label
+	}
+
+	return labelMap, nil
+}
+
+func (s *Service) CreateFilters(f Filters) error {
+
+	for _, filter := range f {
+		newFilter, err := s.Service.Users.Settings.Filters.Create("me", filter).Do()
 		if err != nil {
-			logrus.Errorf("Failed to create filter with ID %s: %v", filter.Id, err)
-			return err
+			log.Printf("Failed to create filter %s: %v", filter.Id, err)
+		} else {
+			log.Printf("Filter %s created successfully", newFilter.Id)
 		}
+	}
 
-		logrus.Infof("Successfully created filter with ID: %s", f.Id)
+	return nil
+}
+
+func (s *Service) Labels() (Labels, error) {
+	res, err := s.Service.Users.Labels.List("me").Do()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Labels, nil
+}
+
+func (s *Service) CreateLabels(l Labels) error {
+	for _, label := range l {
+		newLabel, err := s.Service.Users.Labels.Create("me", label).Do()
+		if err != nil {
+			log.Printf("Failed to create label %s: %v", label.Name, err)
+		} else {
+			log.Printf("Label %s created successfully", newLabel.Id)
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) DeleteFilters(filters Filters) error {
+	for _, filter := range filters {
+		err := s.Users.Settings.Filters.Delete("me", filter.Id).Do()
+		if err != nil {
+			log.Printf("Failed to delete filter %s: %v", filter.Id, err)
+		} else {
+			log.Printf("Filter %s deleted successfully", filter.Id)
+		}
 	}
 	return nil
+}
 
+func (s *Service) DeleteLabels(labels Labels) error {
+	for _, label := range labels {
+		if label.Type == "system" {
+			log.Printf("Skipping system label %s", label.Name)
+			continue
+		}
+		err := s.Users.Labels.Delete("me", label.Id).Do()
+		if err != nil {
+			log.Printf("Failed to delete label %s: %v", label.Name, err)
+		} else {
+			log.Printf("Label %s deleted successfully", label.Name)
+		}
+	}
+
+	return nil
 }
 
 // BuildQueryFromFilter constructs a Gmail search query from a filter's criteria.
@@ -84,7 +106,6 @@ func (s *Service) CreateFilter(filters ...*gmail.Filter) error {
 // - Subject: "Meeting"
 // - Query: "is:unread"
 func (s *Service) BuildQueryFromFilter(criteria *gmail.FilterCriteria) string {
-	logrus.Info("Building Gmail query from filter criteria")
 
 	var queryParts []string
 	if criteria.From != "" {
@@ -102,11 +123,91 @@ func (s *Service) BuildQueryFromFilter(criteria *gmail.FilterCriteria) string {
 
 	// If no criteria is provided, return an empty query
 	if len(queryParts) == 0 {
-		logrus.Warn("No filter criteria provided; returning an empty query")
 		return ""
 	}
 
 	query := "(" + strings.Join(queryParts, " ") + ")"
-	logrus.Infof("Built Gmail query: %s", query)
 	return query
+}
+
+// FetchEmails fetches emails from the Gmail API based on the provided query.
+//
+// Parameters:
+// - query: The Gmail query string to filter emails.
+//
+// Returns:
+// - A slice of Gmail message objects.
+// - An error if the API request fails.
+func (s *Service) FetchEmails(query string) ([]*gmail.Message, error) {
+
+	var messages []*gmail.Message
+	pageToken := ""
+
+	for {
+		// List messages with the specified query and page token
+		req := s.Users.Messages.List("me").Q(query).PageToken(pageToken)
+		resp, err := req.Do()
+		if err != nil {
+			return nil, err
+		}
+
+		// Append fetched messages
+		messages = append(messages, resp.Messages...)
+
+		// Break if there are no more pages
+		if resp.NextPageToken == "" {
+			break
+		}
+
+		// Update page token for the next iteration
+		pageToken = resp.NextPageToken
+	}
+
+	return messages, nil
+}
+
+// ApplyFilterActions applies the actions defined in a Gmail filter to a set of messages.
+func (s *Service) ApplyFilterActions(action *gmail.FilterAction, messages []*gmail.Message) error {
+
+	for _, msg := range messages {
+
+		modifyReq := &gmail.ModifyMessageRequest{
+			AddLabelIds:    action.AddLabelIds,
+			RemoveLabelIds: action.RemoveLabelIds,
+		}
+
+		_, err := s.Users.Messages.Modify("me", msg.Id, modifyReq).Do()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) Messages(max int64) (Messages, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var messages Messages
+
+	req := s.Users.Messages.List("me").MaxResults(max)
+
+	err := req.Pages(ctx, func(page *gmail.ListMessagesResponse) error {
+		for _, m := range page.Messages {
+			msg, err := s.Users.Messages.Get("me", m.Id).Format("full").Do()
+			if err != nil {
+				log.Printf("Error fetching message %s: %v", m.Id, err)
+				continue
+			}
+			messages = append(messages, msg)
+		}
+		return nil
+
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return messages, nil
 }

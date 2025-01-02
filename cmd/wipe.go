@@ -1,59 +1,54 @@
+/*
+Copyright © 2025 Ryan Parsa <imryanparsa@gmail.com>
+*/
 package cmd
 
 import (
 	"github.com/ryanparsa/gmail/internal"
-	"github.com/sirupsen/logrus"
+	"log"
+
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	rootCmd.AddCommand(wipeCmd)
+
 }
 
+// wipeCmd represents the wipe command
 var wipeCmd = &cobra.Command{
 	Use:   "wipe",
-	Short: "Delete all user-created Gmail labels and filters",
-	Long: `The "wipe" command deletes all user-created Gmail labels and filters. 
-It does not remove system labels such as "INBOX" or "SPAM".`,
+	Short: "A brief description of your command",
+	Long: `A longer description that spans multiple lines and likely contains examples
+and usage of using your command. For example:
+
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Retrieve configuration using the helper function
-		config := internal.GetConfigFromFlags(cmd)
-
-		logrus.Infof("Initializing Gmail service with credentials: %s and token: %s", config.Credentials, config.Token)
-
-		// Initialize Gmail service
-		srv := internal.NewService(config.Credentials, config.Token, config.Scopes)
-
-		// Fetch and delete labels
-		logrus.Info("Fetching user-created labels...")
-		labelsResp, err := srv.Labels()
+		svc, err := internal.NewService(credentialsPath, tokenPath, scopes)
 		if err != nil {
-			logrus.Fatalf("Failed to fetch labels: %v", err)
+			log.Fatal(err)
 		}
-		logrus.Infof("Fetched %d labels.", len(labelsResp))
 
-		logrus.Info("Deleting user-created labels...")
-		err = srv.DeleteLabel(labelsResp...)
+		// Fetch Gmail settings
+		filters, err := svc.Filters()
 		if err != nil {
-			logrus.Fatalf("Failed to delete labels: %v", err)
+			log.Fatal(err)
 		}
-		logrus.Info("All user-created labels deleted successfully.")
-
-		// Fetch and delete filters
-		logrus.Info("Fetching Gmail filters...")
-		filtersResp, err := srv.Filters()
+		labels, err := svc.Labels()
 		if err != nil {
-			logrus.Fatalf("Failed to fetch filters: %v", err)
+			log.Fatal(err)
 		}
-		logrus.Infof("Fetched %d filters.", len(filtersResp))
 
-		logrus.Info("Deleting Gmail filters...")
-		err = srv.DeleteFilter(filtersResp...)
+		err = svc.DeleteFilters(filters)
 		if err != nil {
-			logrus.Fatalf("Failed to delete filters: %v", err)
+			log.Printf("Failed to delete filters: %v\n", err)
 		}
-		logrus.Info("All Gmail filters deleted successfully.")
 
-		logrus.Info("Gmail wipe process completed successfully.")
+		err = svc.DeleteLabels(labels)
+		if err != nil {
+			log.Printf("Failed to delete labels: %v\n", err)
+		}
 	},
 }

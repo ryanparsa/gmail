@@ -1,45 +1,45 @@
+/*
+Copyright © 2025 Ryan Parsa <imryanparsa@gmail.com>
+*/
 package cmd
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"google.golang.org/api/gmail/v1"
+	"log"
 )
 
-// Default Gmail API scopes
-var (
-	defaultScopes = []string{
-		gmail.GmailModifyScope,
-		gmail.GmailLabelsScope,
-		gmail.GmailSettingsBasicScope,
-	}
-)
+var credentialsPath string
+var tokenPath string
+var cfgFile string
 
-// Root command for the CLI application
+// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "gmail",
-	Short: "CLI tool to manage Gmail labels and filters",
-	Long: `This application provides a command-line interface (CLI) to interact 
-with the Gmail API, allowing you to manage labels, filters, and other Gmail settings.`,
+	Short: "A brief description of your application",
+	Long: `A longer description that spans multiple lines and likely contains
+examples and usage of using your application. For example:
+
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
+	// Uncomment the following line if your bare application
+	// has an action associated with it:
+	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
-// Initialization function to define persistent flags
-func init() {
-	// Define persistent flags for the root command
-	rootCmd.PersistentFlags().String("config", "config.yaml", "Path to the YAML configuration file")
-	rootCmd.PersistentFlags().String("credentials", "credentials.json", "Path to the credentials JSON file")
-	rootCmd.PersistentFlags().String("token", "token.json", "Path to the token JSON file")
-	rootCmd.PersistentFlags().Int("wait", 5, "Wait time in seconds between operations")
-	rootCmd.PersistentFlags().StringArray("scopes", defaultScopes, "Gmail API scopes to request")
-}
-
-// Execute starts the CLI application
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-
-	// Execute the root command
 	err := rootCmd.Execute()
 	if err != nil {
-		logrus.Fatalf("Error executing command: %v", err)
+		log.Fatal(err)
 	}
+}
+
+func init() {
+
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "", "config.yaml", "config file")
+	rootCmd.PersistentFlags().StringVarP(&credentialsPath, "credentials", "c", "credentials.json", "Path to the credentials JSON file")
+	rootCmd.PersistentFlags().StringVarP(&tokenPath, "token", "t", "token.json", "Path to the token JSON file")
 
 }
