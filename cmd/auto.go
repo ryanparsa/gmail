@@ -16,20 +16,20 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(smartCmd)
+	rootCmd.AddCommand(autoCmd)
 
 	// Flags for OpenAI host, model, and API key
-	smartCmd.Flags().StringVar(&openAIHost, "openai-host", "https://api.openai.com", "The OpenAI API host")
-	smartCmd.Flags().StringVar(&openAIKey, "openai-key", "", "The OpenAI API key (required)")
-	smartCmd.Flags().StringVarP(&openAIModel, "openai-model", "m", openai.ChatModelGPT4o, "The OpenAI model to use")
+	autoCmd.Flags().StringVar(&openAIHost, "openai-host", "https://api.openai.com", "The OpenAI API host")
+	autoCmd.Flags().StringVar(&openAIKey, "openai-key", "", "The OpenAI API key (required)")
+	autoCmd.Flags().StringVarP(&openAIModel, "openai-model", "m", openai.ChatModelGPT4o, "The OpenAI model to use")
 
 	// Flag for the number of emails to fetch
-	smartCmd.Flags().Int64VarP(&numEmails, "size", "s", 1000, "Number of emails to fetch")
+	autoCmd.Flags().Int64VarP(&numEmails, "size", "s", 1000, "Number of emails to fetch")
 }
 
-// smartCmd represents the smart command
-var smartCmd = &cobra.Command{
-	Use:   "smart",
+// autoCmd represents the auto command
+var autoCmd = &cobra.Command{
+	Use:   "auto",
 	Short: "Generate filters and labels using OpenAI and Gmail messages",
 	Long:  `Fetch Gmail messages, analyze them with OpenAI, and generate filters and labels.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -49,7 +49,7 @@ var smartCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		logrus.Info("Starting the 'smart' command...")
+		logrus.Info("Starting the 'auto' command...")
 
 		// Step 1: Initialize Gmail Service
 		logrus.Info("Initializing Gmail service...")
@@ -60,7 +60,7 @@ var smartCmd = &cobra.Command{
 
 		// Step 2: Fetch Gmail Messages
 		logrus.Infof("Fetching the latest %d emails...", numEmails)
-		messages, err := svc.Messages(numEmails)
+		messages, err := svc.Messages(numEmails, "")
 		if err != nil {
 			logrus.Fatalf("Failed to fetch emails: %v", err)
 		}
@@ -83,6 +83,6 @@ var smartCmd = &cobra.Command{
 		}
 		logrus.Infof("Filters and labels saved successfully to %s.", outputFile)
 
-		logrus.Info("Smart command completed successfully.")
+		logrus.Info("auto command completed successfully.")
 	},
 }

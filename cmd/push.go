@@ -63,7 +63,6 @@ var pushCmd = &cobra.Command{
 			for id, label := range filter.Action.AddLabelIds {
 				if labelID, exists := lm[label]; exists {
 					filter.Action.AddLabelIds[id] = labelID.Id
-					logrus.Infof("Mapped AddLabelId '%s' to ID '%s'.", label, labelID.Id)
 				} else {
 					logrus.Warnf("Label '%s' does not exist. Skipping AddLabelId mapping.", label)
 				}
