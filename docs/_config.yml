@@ -1,0 +1,52 @@
+remote_theme: just-the-docs/just-the-docs
+
+title: Gmail CLI
+description: A command line interface for Gmail
+repository: "ryanparsa/gmail"
+
+permalink: pretty
+
+#ga_tracking: UA-2709176-10
+
+search_enabled: true
+nav_enabled: true
+
+last_edit_timestamp: true
+
+gh_edit_link: true
+gh_edit_view_mode: "tree"
+
+mermaid:
+  version: "9.1.6"
+
+
+callouts_level: quiet
+
+callouts:
+  highlight:
+    color: yellow
+  important:
+    title: Important
+    color: blue
+  new:
+    title: New
+    color: green
+  note:
+    title: Note
+    color: purple
+  warning:
+    title: Warning
+    color: red
+
+
+
+plugins:
+  - jekyll-seo-tag
+  - jekyll-github-metadata
+  - jekyll-include-cache
+  - jekyll-sitemap
+
+kramdown:
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
