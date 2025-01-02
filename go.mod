@@ -5,6 +5,7 @@ go 1.23.4
 require (
 	github.com/invopop/jsonschema v0.13.0
 	github.com/openai/openai-go v0.1.0-alpha.41
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	golang.org/x/oauth2 v0.18.0
 	google.golang.org/api v0.171.0

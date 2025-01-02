@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
 )
@@ -17,7 +18,7 @@ func NewService(credentialsPath, tokenPath string, scopes []string) (*Service, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Gmail client: %v", err)
 	}
-
+	logrus.Info("Gmail client initialized")
 	// Create Gmail service
 	svc, err := gmail.NewService(context.Background(), option.WithHTTPClient(client))
 	if err != nil {

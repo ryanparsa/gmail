@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/openai/openai-go"
 	"github.com/ryanparsa/gmail/internal"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 var (
@@ -17,6 +17,7 @@ var (
 
 func init() {
 	rootCmd.AddCommand(smartCmd)
+
 	// Flags for OpenAI host, model, and API key
 	smartCmd.Flags().StringVar(&openAIHost, "openai-host", "https://api.openai.com", "The OpenAI API host")
 	smartCmd.Flags().StringVar(&openAIKey, "openai-key", "", "The OpenAI API key (required)")
@@ -24,13 +25,15 @@ func init() {
 
 	// Flag for the number of emails to fetch
 	smartCmd.Flags().Int64VarP(&numEmails, "size", "s", 1000, "Number of emails to fetch")
-
 }
 
 // smartCmd represents the smart command
 var smartCmd = &cobra.Command{
-	Use: "smart",
+	Use:   "smart",
+	Short: "Generate filters and labels using OpenAI and Gmail messages",
+	Long:  `Fetch Gmail messages, analyze them with OpenAI, and generate filters and labels.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
+		// Validate required flags
 		if openAIKey == "" {
 			return fmt.Errorf("openai-key is required")
 		}
@@ -46,31 +49,40 @@ var smartCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		logrus.Info("Starting the 'smart' command...")
+
+		// Step 1: Initialize Gmail Service
+		logrus.Info("Initializing Gmail service...")
 		svc, err := internal.NewService(credentialsPath, tokenPath, scopes)
 		if err != nil {
-			log.Fatalln(err)
+			logrus.Fatalf("Failed to initialize Gmail service: %v", err)
 		}
 
-		m, err := svc.Messages(numEmails)
+		// Step 2: Fetch Gmail Messages
+		logrus.Infof("Fetching the latest %d emails...", numEmails)
+		messages, err := svc.Messages(numEmails)
 		if err != nil {
-			log.Fatalln(err)
+			logrus.Fatalf("Failed to fetch emails: %v", err)
 		}
+		logrus.Infof("Fetched %d emails successfully.", len(messages))
 
-		// Call OpenAI to generate filters and labels
-		response, err := internal.GetFiltersAndLabelsFromAI(openAIKey, openAIHost, openAIModel, m)
+		// Step 3: Call OpenAI API
+		logrus.Infof("Generating filters and labels using OpenAI model '%s'...", openAIModel)
+		response, err := internal.GetFiltersAndLabelsFromAI(openAIKey, openAIHost, openAIModel, messages)
 		if err != nil {
-			log.Fatalf("Failed to generate filters and labels: %v", err)
+			logrus.Fatalf("Failed to generate filters and labels: %v", err)
 		}
+		logrus.Info("Filters and labels generated successfully.")
 
-		// Save the generated filters and labels to a file
+		// Step 4: Save Output to File
 		outputFile := "filters_and_labels.json"
-
+		logrus.Infof("Saving filters and labels to file: %s", outputFile)
 		err = response.SaveToFile(outputFile)
 		if err != nil {
-			log.Fatalln(err)
-		} else {
-			fmt.Printf("Filters and labels saved to %s\n", outputFile)
+			logrus.Fatalf("Failed to save filters and labels to file: %v", err)
 		}
+		logrus.Infof("Filters and labels saved successfully to %s.", outputFile)
 
+		logrus.Info("Smart command completed successfully.")
 	},
 }

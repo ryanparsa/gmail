@@ -1,54 +1,74 @@
-/*
-Copyright © 2025 Ryan Parsa <imryanparsa@gmail.com>
-*/
 package cmd
 
 import (
 	"github.com/ryanparsa/gmail/internal"
-	"log"
-
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	rootCmd.AddCommand(wipeCmd)
-
 }
 
 // wipeCmd represents the wipe command
 var wipeCmd = &cobra.Command{
 	Use:   "wipe",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Delete all Gmail filters and labels",
+	Long: `The wipe command deletes all filters and labels from the connected Gmail account.
+It ensures a clean slate by removing user-defined filters and labels.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		logrus.Info("Starting the 'wipe' command...")
+
+		// Step 1: Initialize Gmail Service
+		logrus.Info("Initializing Gmail service...")
 		svc, err := internal.NewService(credentialsPath, tokenPath, scopes)
 		if err != nil {
-			log.Fatal(err)
+			logrus.Fatalf("Failed to initialize Gmail service: %v", err)
 		}
+		logrus.Info("Gmail service initialized successfully.")
 
-		// Fetch Gmail settings
+		// Step 2: Fetch Gmail Filters
+		logrus.Info("Fetching Gmail filters...")
 		filters, err := svc.Filters()
 		if err != nil {
-			log.Fatal(err)
+			logrus.Fatalf("Failed to fetch Gmail filters: %v", err)
 		}
+		logrus.Infof("Fetched %d filters successfully.", len(filters))
+
+		// Step 3: Fetch Gmail Labels
+		logrus.Info("Fetching Gmail labels...")
 		labels, err := svc.Labels()
 		if err != nil {
-			log.Fatal(err)
+			logrus.Fatalf("Failed to fetch Gmail labels: %v", err)
+		}
+		logrus.Infof("Fetched %d labels successfully.", len(labels))
+
+		// Step 4: Delete Filters
+		if len(filters) > 0 {
+			logrus.Info("Deleting Gmail filters...")
+			err = svc.DeleteFilters(filters)
+			if err != nil {
+				logrus.Errorf("Failed to delete filters: %v", err)
+			} else {
+				logrus.Info("Filters deleted successfully.")
+			}
+		} else {
+			logrus.Info("No filters to delete.")
 		}
 
-		err = svc.DeleteFilters(filters)
-		if err != nil {
-			log.Printf("Failed to delete filters: %v\n", err)
+		// Step 5: Delete Labels
+		if len(labels) > 0 {
+			logrus.Info("Deleting Gmail labels...")
+			err = svc.DeleteLabels(labels)
+			if err != nil {
+				logrus.Errorf("Failed to delete labels: %v", err)
+			} else {
+				logrus.Info("Labels deleted successfully.")
+			}
+		} else {
+			logrus.Info("No labels to delete.")
 		}
 
-		err = svc.DeleteLabels(labels)
-		if err != nil {
-			log.Printf("Failed to delete labels: %v\n", err)
-		}
+		logrus.Info("Wipe command completed successfully.")
 	},
 }
