@@ -10,12 +10,6 @@ var tokenPath string
 var cfgFile string
 
 func init() {
-	logrus.SetFormatter(&logrus.TextFormatter{
-		ForceColors:      true,
-		DisableTimestamp: true,
-	})
-
-	logrus.SetLevel(logrus.DebugLevel)
 
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "", "config.yaml", "config file")
 	rootCmd.PersistentFlags().StringVarP(&credentialsPath, "credentials", "c", "credentials.json", "Path to the credentials JSON file")
@@ -26,7 +20,7 @@ func init() {
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "gmail",
-	Short: "A brief description of your application",
+	Short: "A CLI tool to interact with Gmail",
 }
 
 func Execute() {
