@@ -12,7 +12,7 @@ func (s *Service) DeleteLabels(labels Labels) error {
 			logrus.Infof("Skipping system label: %s", label.Name)
 			continue
 		}
-		err := s.Users.Labels.Delete("me", label.Id).Do()
+		err := s.Users.Labels.Delete(userId, label.Id).Do()
 		if err != nil {
 			logrus.Errorf("Failed to delete label %s: %v", label.Name, err)
 		} else {
@@ -25,7 +25,7 @@ func (s *Service) DeleteLabels(labels Labels) error {
 // CreateLabels creates new labels in the user's Gmail account.
 func (s *Service) CreateLabels(l Labels) error {
 	for _, label := range l {
-		newLabel, err := s.Service.Users.Labels.Create("me", label).Do()
+		newLabel, err := s.Service.Users.Labels.Create(userId, label).Do()
 		if err != nil {
 			logrus.Errorf("Failed to create label %s: %v", label.Name, err)
 		} else {
@@ -38,7 +38,7 @@ func (s *Service) CreateLabels(l Labels) error {
 // Labels retrieves all labels in the user's Gmail account.
 func (s *Service) Labels() (Labels, error) {
 	logrus.Info("Fetching all labels from Gmail...")
-	res, err := s.Service.Users.Labels.List("me").Do()
+	res, err := s.Service.Users.Labels.List(userId).Do()
 	if err != nil {
 		logrus.Errorf("Failed to fetch labels: %v", err)
 		return nil, err

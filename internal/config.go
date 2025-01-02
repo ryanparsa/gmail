@@ -16,6 +16,8 @@ type Labels []*gmail.Label
 // Messages represent Gmail Messages
 type Messages []*gmail.Message
 
+const userId = "me"
+
 // Config represents the configuration containing filters and labels
 type Config struct {
 	Labels  Labels  `yaml:"labels" json:"labels" jsonschema_description:"Labels to be created"`

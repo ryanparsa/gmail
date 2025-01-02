@@ -29,9 +29,10 @@ func init() {
 
 // autoCmd represents the auto command
 var autoCmd = &cobra.Command{
-	Use:   "auto",
-	Short: "Generate filters and labels using OpenAI and Gmail messages",
-	Long:  `Fetch Gmail messages, analyze them with OpenAI, and generate filters and labels.`,
+	Use:    "auto",
+	Hidden: true,
+	Short:  "Generate filters and labels using OpenAI and Gmail messages",
+	Long:   `Fetch Gmail messages, analyze them with OpenAI, and generate filters and labels.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		// Validate required flags
 		if openAIKey == "" {

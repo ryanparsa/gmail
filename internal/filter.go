@@ -10,7 +10,7 @@ import (
 // Filters fetches all Gmail filters for the user.
 func (s *Service) Filters() (Filters, error) {
 	logrus.Info("Fetching Gmail filters...")
-	res, err := s.Service.Users.Settings.Filters.List("me").Do()
+	res, err := s.Service.Users.Settings.Filters.List(userId).Do()
 	if err != nil {
 		logrus.Errorf("Failed to fetch Gmail filters: %v", err)
 		return nil, err
@@ -29,7 +29,7 @@ func (s *Service) ApplyFilterActions(action *gmail.FilterAction, messages []*gma
 			RemoveLabelIds: action.RemoveLabelIds,
 		}
 
-		_, err := s.Users.Messages.Modify("me", msg.Id, modifyReq).Do()
+		_, err := s.Users.Messages.Modify(userId, msg.Id, modifyReq).Do()
 		if err != nil {
 			logrus.Errorf("Failed to apply filter actions to message %s: %v", msg.Id, err)
 			return err
@@ -72,7 +72,7 @@ func (s *Service) BuildQueryFromFilter(criteria *gmail.FilterCriteria) string {
 func (s *Service) DeleteFilters(filters Filters) error {
 	logrus.Infof("Deleting %d Gmail filters...", len(filters))
 	for _, filter := range filters {
-		err := s.Users.Settings.Filters.Delete("me", filter.Id).Do()
+		err := s.Users.Settings.Filters.Delete(userId, filter.Id).Do()
 		if err != nil {
 			logrus.Errorf("Failed to delete filter %s: %v", filter.Id, err)
 		} else {
@@ -88,7 +88,7 @@ func (s *Service) CreateFilters(f Filters) error {
 	logrus.Infof("Creating %d Gmail filters...", len(f))
 
 	for _, filter := range f {
-		newFilter, err := s.Service.Users.Settings.Filters.Create("me", filter).Do()
+		newFilter, err := s.Service.Users.Settings.Filters.Create(userId, filter).Do()
 		if err != nil {
 			logrus.Errorf("Failed to create filter: %v", err)
 		} else {

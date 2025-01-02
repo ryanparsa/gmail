@@ -111,7 +111,7 @@ func validateToken(config *oauth2.Config, token *oauth2.Token) error {
 		return err
 	}
 
-	_, err = svc.Users.GetProfile("me").Do()
+	_, err = svc.Users.GetProfile(userId).Do()
 	if err != nil {
 		logrus.Errorf("Failed to validate token: %v", err)
 		return err

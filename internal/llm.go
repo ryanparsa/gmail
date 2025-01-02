@@ -24,7 +24,7 @@ func GenerateSchema[T any]() interface{} {
 
 // GetFiltersAndLabelsFromAI interacts with the OpenAI API to generate Gmail filters and labels based on email samples.
 func GetFiltersAndLabelsFromAI(openAIKey, openAIHost, openAIModel string, messages Messages) (*Config, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
 	// Initialize the OpenAI client
