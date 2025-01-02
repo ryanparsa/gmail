@@ -158,7 +158,7 @@ func getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
 		_ = server.Close()
 	}()
 
-	token, err := config.Exchange(oauth2.NoContext, authCode)
+	token, err := config.Exchange(context.Background(), authCode)
 	if err != nil {
 		logrus.Errorf("Failed to exchange authorization code for token: %v", err)
 		return nil, fmt.Errorf("failed to exchange authorization code for token: %v", err)
